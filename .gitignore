@@ -203,3 +203,13 @@ cython_debug/
 
 backend/.langgraph_api
 .run/
+
+# 本地凭据与私钥
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
