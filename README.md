@@ -250,3 +250,14 @@ DeepValue/
 ## 本地配置与数据
 
 `backend/.env`、虚拟环境、`node_modules/`、运行日志及 `.run/` 数据均不纳入版本管理。提交前应检查文件内容，避免把凭据写入源码、配置示例或文档。
+
+## 分支、协作与版本发布
+
+- `main`：发布分支；`dev`：开发集成分支。两者通过 PR 更新，要求 CI 通过，禁止强制推送和删除。
+- 从 `dev` 创建 `codex/<feature>` 特性分支，关联 Issue 与 spec；完成后提 PR 合并回 `dev`。
+- SpecDD 顺序为规约、实现、特征测试。CI 当前检查前端构建、后端语法与图加载，不代表特征测试已覆盖；能力测试落地后纳入 CI。
+- 每个能力用 Issue 跟踪范围、依赖和验收；缺陷 Issue 提供复现步骤，禁止附带敏感信息。
+- 每个变更同步相关文档及 [CHANGELOG.md](./CHANGELOG.md) 的 Unreleased 条目。
+- 版本就绪后，从 `dev` 提 PR 到 `main`；将 Unreleased 条目归入版本号与日期，合并通过后在该提交上打 `vX.Y.Z` 标签并创建 GitHub Release。
+- 发布采用保留历史的 merge commit，发布后将 `main` 经 PR 同步回 `dev`，保持分支历史一致。
+- 个人开发阶段不强制他人审批，但仍要求 PR、CI 与讨论解决。

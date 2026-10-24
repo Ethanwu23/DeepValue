@@ -1,0 +1,21 @@
+name: 缺陷反馈
+description: 提供可复现问题和预期行为
+title: "[Bug] "
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请勿粘贴凭据、私有资料或含敏感内容的日志。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 实际行为与预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 版本及运行环境
