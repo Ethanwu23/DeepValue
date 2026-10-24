@@ -1,0 +1,21 @@
+name: 需求或能力改造
+description: 跟踪能力范围、规约与验收
+title: "[需求] "
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目标与范围
+    validations:
+      required: true
+  - type: textarea
+    id: spec
+    attributes:
+      label: 对应规约与验收条件
+      description: 按先规约、再实现、再特征测试推进。
+    validations:
+      required: true
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: 非目标与依赖
