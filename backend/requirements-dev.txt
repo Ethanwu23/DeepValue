@@ -1,0 +1,5 @@
+# 开发与测试依赖，与运行时依赖 requirements-lock.txt 分离。
+# 由 pyproject.toml 的 [dependency-groups] dev 对应，CI 与本地测试使用。
+pytest==9.1.1
+pluggy==1.7.0
+iniconfig==2.3.1
