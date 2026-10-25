@@ -1,6 +1,6 @@
 # DeepValue 规约索引
 
-状态：Proposed；本目录是目标行为契约，当前代码仍为原型实现。顺序：先规约、再实现、再特征测试。
+状态：Accepted（随本 PR 合并到 dev 生效）；本目录是目标行为契约，当前代码仍为原型实现。顺序：先规约、再实现、再特征测试。
 
 先读 [总规约](00-system-contract.md)，再读能力 spec、[迁移矩阵](migration-plan.md) 和 [验收矩阵](acceptance-matrix.md)。规则变更必须同时更新这些文档，不以新增 fallback 解决冲突。
 
@@ -35,6 +35,6 @@
 
 ## 审查与状态
 
-本PR合并到dev后才将规约标记Accepted；实现中若发现不满足契约的供应商行为，先通过PR修改spec和验收，再改实现，禁止静默扩大支持范围。总任务[#1](https://github.com/Ethanwu23/DeepValue/issues/1)跟踪规约交付，能力Issue持续跟踪实现与测试。
+本PR已完成规约一致性审查，Accepted状态随合并到dev生效；实现中若发现不满足契约的供应商行为，先通过PR修改spec和验收，再改实现，禁止静默扩大支持范围。总任务[#1](https://github.com/Ethanwu23/DeepValue/issues/1)跟踪规约交付，能力Issue持续跟踪实现与测试。
 
 本轮接口方案参考 [SEC](https://www.sec.gov/search-filings/edgar-application-programming-interfaces)、[FRED](https://fred.stlouisfed.org/docs/api/fred/series_observations.html)、[Federal Register](https://www.federalregister.gov/developers/documentation/api/v1) 官方说明，详细时间口径见总规约。

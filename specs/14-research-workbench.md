@@ -1,6 +1,6 @@
 # DV-14 研究工作台
 
-状态：Proposed；版本：1.0；日期：2026-10-25。
+状态：Accepted（随本 PR 合并到 dev 生效）；版本：1.0；日期：2026-10-25。
 关联：[Issue #16](https://github.com/Ethanwu23/DeepValue/issues/16)。公共约束：[总规约](00-system-contract.md)。本文件定义目标行为，不宣称已实现。
 
 ## 1. 目标与范围

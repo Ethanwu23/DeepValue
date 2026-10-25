@@ -1,6 +1,6 @@
 # DeepValue 总规约（DV-00）
 
-状态：Proposed，待本 PR 审查。版本：1.0。日期：2026-10-25。
+状态：Accepted，规约审查通过，随本 PR 合并到 dev 生效。版本：1.0。日期：2026-10-25。
 关联：[总任务 #1](https://github.com/Ethanwu23/DeepValue/issues/1)。
 
 本文是后续实现的规范，不描述当前代码已经具备全部能力。MUST/必须为验收约束；修改本规约必须同步能力 spec、验收编号和 CHANGELOG。各 spec 冲突时以本文为准，不能靠实现自行选择语义。
@@ -141,7 +141,7 @@ completed 表示报告生成完成，可同时 research_status=limited 或 block
 4. 最后整体切换：主图、API与前端使用统一契约，真实 CAT 联调明确记录有效来源与剩余缺口。
 5. CI当前只有构建/加载检查；不能将绿色CI当作业务验收。每个能力完成后把对应特征测试加入CI；真实付费接入不放入常规CI。
 
-工作分支 codex/specifications，PR目标 dev。仅完成规约不关闭含实现与测试任务的能力Issue。通过规约审查后状态才由 Proposed 变为 Accepted；当前不会提前写业务代码。
+工作分支 codex/specifications，PR目标 dev。仅完成规约不关闭含实现与测试任务的能力Issue。本次已完成规约一致性审查，Accepted 状态随合并生效；本次仍不提前写业务代码。
 
 ## 9.1 对外运行接口
 
