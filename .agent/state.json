@@ -1,0 +1,27 @@
+{
+  "project": "DeepValue",
+  "current_goal": "为估值与财务计算建立回归测试基线",
+  "current_branch": "maintenance/2026-10-25-valuation-tests",
+  "last_reviewed_commit": "ba39717",
+  "last_maintenance_date": "2026-10-25",
+  "last_task": "test: cover PE valuation scenarios and EPS sensitivity",
+  "last_result": "added backend/tests/test_valuation.py (12 cases), pytest wired into CI, all green",
+  "tests_status": "backend: 12 passing (tests/test_valuation.py); frontend: none exist",
+  "ci_status": "ci.yml now installs requirements-dev.txt and runs pytest; local equivalent passes; remote run unverified (gh CLI unavailable)",
+  "open_risks": [
+    "估值已有回归测试，但财务事实筛选 sec.py 与证据过滤 evidence.py 仍无测试",
+    "CI 仍未执行 ruff / mypy / 前端 lint 与 typecheck",
+    "端到端研究流程未验证：backend/.env 缺少真实凭据",
+    "gh CLI 不可用，无法读取远程 CI 运行记录与 Issue 列表",
+    "run*.sh 仅支持 macOS，Windows 无法使用；uvloop 与 GBK 编码需额外处理",
+    "app.py:61 存在 bare except，会吞掉系统级异常",
+    "post.py 存在无效转义序列 SyntaxWarning 与遗留 __main__ 演示代码"
+  ],
+  "next_candidates": [
+    "TASK-005 为 evidence.py 的证据时间过滤补回归测试",
+    "TASK-002 修复 app.py:61 bare except",
+    "TASK-003 修复 post.py 无效转义序列并移除遗留演示代码",
+    "TASK-004 CI 增加 ruff 检查",
+    "为 sec.py 的财务事实筛选补回归测试"
+  ]
+}
