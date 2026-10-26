@@ -14,6 +14,15 @@
 
 ## P1 Bug
 
+- [ ] 确认 `collect_policy` 遇异常数据是应中断还是跳过
+  - reason: `evidence.py:158` 在政策数据晚于截止日时直接 `raise ValueError`，会中断整轮采集；
+    而 `verify_page` 的同等情形是记入 `rejected` 并继续。两者行为不一致，
+    一条脏数据可能导致整个研究流程失败
+  - affected: backend/src/agent/value/evidence.py
+  - risk: low-medium（需先与预期行为对齐，金融数据采集路径）
+  - estimated_scope: small
+  - note: 2026-10-27 读码时发现，尚未确认预期行为，未改动
+
 - [x] TASK-002 修复 `app.py:61` 的 bare except
   - reason: `except:` 会吞掉 `KeyboardInterrupt` / `SystemExit`，且掩盖请求体解析的真实错误
   - affected: backend/src/agent/app.py
@@ -31,11 +40,14 @@
   - estimated_scope: small
   - done: 2026-10-25，12 个用例全部通过，覆盖三个 blocked 出口、中位数口径、±20% 敏感性、ROUND_HALF_UP 舍入
 
-- [ ] TASK-005 为 `evidence.py` 的证据时间过滤补回归测试
+- [x] TASK-005 为 `evidence.py` 的证据时间过滤补回归测试
   - reason: 截止日前瞻过滤是防前视偏差的核心机制，出错会直接污染研究结论
   - affected: backend/tests/test_evidence.py（新建）
   - risk: low
   - estimated_scope: small
+  - done: 2026-10-27，18 个用例，覆盖 ArticleParser.dates 抽取、
+    source_id、public_url SSRF 防护、verify_page 截止日门禁的接受与 5 类拒绝分支；
+    全部用例不依赖外网
 
 - [x] 引入 pytest 并把测试纳入 CI
   - reason: `pytest` 在 pyproject dev group 中声明但未进 `requirements-lock.txt`，CI 也未调用

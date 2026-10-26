@@ -1,27 +1,28 @@
 {
   "project": "DeepValue",
-  "current_goal": "扩大回归测试覆盖，先清理日志与中间件路径上的风险",
-  "current_branch": "maintenance/2026-10-26-middleware-bare-except",
-  "last_reviewed_commit": "6d4931a",
-  "last_maintenance_date": "2026-10-26",
-  "last_task": "fix: replace bare except in request logging middleware",
-  "last_result": "bare except 替换为具体解析异常；新增 4 个中间件测试，全套 16 passed",
-  "tests_status": "backend: 16 passing (test_valuation 12 + test_app_middleware 4); frontend: none exist",
-  "ci_status": "dev@6d4931a merged via PR #19 with 2 checks passed; local pytest/compileall/graph all green; remote still unverified directly (gh CLI unavailable)",
+  "current_goal": "扩大回归测试覆盖，重点保护防前视偏差与金融计算路径",
+  "current_branch": "maintenance/2026-10-27-evidence-cutoff-tests",
+  "last_reviewed_commit": "128a3d9",
+  "last_maintenance_date": "2026-10-27",
+  "last_task": "test: cover evidence date filtering and cutoff enforcement",
+  "last_result": "新增 backend/tests/test_evidence.py 18 个用例，全套 34 passed，未改业务代码",
+  "tests_status": "backend: 34 passing (valuation 12 + app_middleware 4 + evidence 18); frontend: none exist",
+  "ci_status": "dev@128a3d9 merged via PR #20; local pytest/compileall/graph all green; remote not directly readable (gh CLI unavailable)",
   "open_risks": [
-    "财务事实筛选 sec.py 与证据过滤 evidence.py 仍无测试",
+    "财务事实筛选 sec.py 仍无测试，估值正确性依赖其输出",
     "CI 仍未执行 ruff / mypy / 前端 lint 与 typecheck",
     "端到端研究流程未验证：backend/.env 缺少真实凭据",
     "gh CLI 不可用，无法读取远程 CI 运行记录与 Issue 列表",
     "run*.sh 仅支持 macOS，Windows 无法使用；uvloop 与 GBK 编码需额外处理",
     "post.py 存在无效转义序列 SyntaxWarning 与遗留 __main__ 演示代码",
-    "configuration.py 6 处使用 pydantic 已废弃的 Field(metadata=...)，Pydantic v3 将移除"
+    "configuration.py 6 处使用 pydantic 已废弃的 Field(metadata=...)，Pydantic v3 将移除",
+    "collect_policy 遇到晚于截止日的数据直接 raise，会中断整轮采集而非跳过该条"
   ],
   "next_candidates": [
-    "TASK-005 为 evidence.py 的证据时间过滤补回归测试",
     "TASK-003 修复 post.py 无效转义序列并移除遗留演示代码",
-    "TASK-004 CI 增加 ruff 检查（建议首批只开 E/F）",
     "为 sec.py 的财务事实筛选补回归测试",
-    "修复 configuration.py 的 pydantic Field(metadata=...) 废弃告警"
+    "TASK-004 CI 增加 ruff 检查（建议首批只开 E/F）",
+    "修复 configuration.py 的 pydantic Field(metadata=...) 废弃告警",
+    "确认 collect_policy 遇异常数据时是应中断还是跳过该条"
   ]
 }
