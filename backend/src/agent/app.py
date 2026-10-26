@@ -1,4 +1,5 @@
 # mypy: disable - error - code = "no-untyped-def,misc"
+import json
 import pathlib
 import traceback
 from fastapi import FastAPI, Response, Request
@@ -55,11 +56,12 @@ async def log_requests(request: Request, call_next):
             body = await request.body()
             if body:
                 try:
-                    import json
                     body_data = json.loads(body.decode())
                     log_request_details(body_data)
-                except:
-                    log_request_details(body.decode())
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    # 非 JSON 或非 UTF-8 请求体回退记录原文；
+                    # 只捕获解析异常，避免吞掉 SystemExit / KeyboardInterrupt 等 BaseException
+                    log_request_details(body.decode(errors="replace"))
     except Exception as e:
         logger.error(f"记录请求日志时出错: {str(e)}")
         logger.error(traceback.format_exc())

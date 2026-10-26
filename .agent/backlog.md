@@ -14,11 +14,13 @@
 
 ## P1 Bug
 
-- [ ] TASK-002 修复 `app.py:61` 的 bare except
+- [x] TASK-002 修复 `app.py:61` 的 bare except
   - reason: `except:` 会吞掉 `KeyboardInterrupt` / `SystemExit`，且掩盖请求体解析的真实错误
   - affected: backend/src/agent/app.py
   - risk: low
   - estimated_scope: small
+  - done: 2026-10-26，改为捕获 `(json.JSONDecodeError, UnicodeDecodeError)` 并用 `errors="replace"` 回退；
+    新增 backend/tests/test_app_middleware.py 4 个用例，修复前 2 failed → 修复后通过
 
 ## P2 Test
 
@@ -70,6 +72,12 @@
   - risk: low
   - estimated_scope: small
   - note: 首次接入可能暴露大量存量 D 规则告警，需评估是否分批启用
+
+- [ ] 修复 `configuration.py` 的 Pydantic 废弃告警
+  - reason: 运行测试时出现 6 处 `PydanticDeprecatedSince20`：`Field(..., metadata=...)` 已废弃，Pydantic v3 将移除，届时会直接报错
+  - affected: backend/src/agent/configuration.py（第 52/57/64/71/78/83 行附近）
+  - risk: low-medium（涉及配置字段定义，需确认字段行为不变）
+  - estimated_scope: small
 
 - [ ] 修正脚本文件名拼写 `run_fontend.sh`
   - reason: fontend 应为 frontend，脚本名与 README 引用不一致
