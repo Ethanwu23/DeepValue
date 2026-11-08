@@ -22,7 +22,7 @@ from agent.value import evidence
 
 URL = "https://example.com/report"
 CUTOFF = "2025-03-01"
-BODY = "卡特彼勒经营观察与行业周期分析。" * 20  # 280 字，超过 200 字正文下限
+BODY = "Alphabet谷歌广告与云业务经营观察。" * 20  # 280 字，超过 200 字正文下限
 
 
 def _html(published=None, modified=None, body=BODY, ldjson=None):

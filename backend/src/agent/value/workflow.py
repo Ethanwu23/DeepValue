@@ -1,5 +1,6 @@
 import json
 import re
+from pydantic import ValidationError
 from datetime import date, timedelta
 from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, START, END
@@ -37,13 +38,14 @@ def plan_research(state: ValueState):
     after = (date.fromisoformat(scope["as_of"]) - timedelta(days=365)).isoformat()
     name = state["company"]["name"]
     queries = {
-        "news": f'{name} earnings capital allocation risks press release after:{after} before:{before}',
-        "industry": f'{state["company"]["sic_description"]} demand competition industry after:{after} before:{before}',
-        "policy": "manufacturing tariffs",
+        "news": f'site:abc.xyz {name} earnings results capital expenditure after:{after} before:{before}',
+        "industry": f'digital advertising cloud computing artificial intelligence competition industry after:{after} before:{before}',
+        "policy": "digital advertising competition regulation",
     }
     if round_number > 1:
+        queries["policy"] = '"artificial intelligence"'
         queries["news"] = f'{name} annual results financial outlook after:{after} before:{before}'
-        queries["industry"] = f'{name} machinery demand downturn competitors after:{after} before:{before}'
+        queries["industry"] = f'{name} digital advertising cloud competition antitrust after:{after} before:{before}'
     tasks = [{"id": f"{round_number}-{category}", "category": category, "query": queries[category]}
              for category in categories]
     return {"round": round_number, "tasks": tasks}
@@ -86,7 +88,10 @@ def validate_evidence(state: ValueState):
     for row in state["financials"]:
         if set(row["metrics"]) != set(METRICS):
             issues.append(f"{row['period_end']} 关键财务指标不完整")
-    return {"financial_issues": sorted(set(issues))}
+    present = {item["category"] for item in state["evidence"].values()}
+    missing = [c for c in ("news", "industry", "policy") if c not in present]
+    return {"financial_issues": sorted(set(issues)),
+            "review": {"status": "limited", "missing_categories": missing, "gaps": []}}
 
 
 def financial_route(state: ValueState):
@@ -104,13 +109,22 @@ def analyze_business(state: ValueState):
 最多6项判断，每项引用至少一段8至350字符的逐字原文；不要改写quote。
 禁止给买卖建议、目标价、当前价格，禁止自行计算或增加未在资料出现的数字。
 政策摘要只支持摘要层面的观察，不代表已生效或适用于公司。
-区分已披露事实与推断。不要把新闻重复报道视为独立证据，也不要声称财报数字证明护城河。
+区分已披露事实与推断。新闻判断必须以“据报道”或“该来源称”开头，不能把报道说法直接升级为事实。引用年度财报时必须在判断中写出对应财年，不得用2025年财报描述2026年季度。不要把新闻重复报道视为独立证据，也不要声称财报数字证明护城河。
 若资料不足则少写claims并明确gaps，不得编造。关注问题：{focus}
 资料：{evidence}"""
     agent = JsonAgent(model_id=state["scope"]["model"], keys=Analysis)
     agent.set_step_prompt(prompt)
-    result = agent.step(as_of=state["scope"]["as_of"], focus=state["scope"]["focus"],
-                        evidence=json.dumps(evidence, ensure_ascii=False))
+    try:
+        result = agent.step(as_of=state["scope"]["as_of"], focus=state["scope"]["focus"],
+                            evidence=json.dumps(evidence, ensure_ascii=False))
+    except (ValidationError, json.JSONDecodeError) as error:
+        # 不截断原文、不放宽长度；本次分析明确失败，事实和估值仍可形成有限报告。
+        detail = "模型输出未通过结构校验，本轮经营判断未被采用"
+        if isinstance(error, ValidationError):
+            if any(e["type"] == "string_too_long" and e["loc"][-1] == "quote"
+                   for e in error.errors(include_input=False)):
+                detail = "模型引用超过350字符，本轮经营判断未被采用"
+        return {"analysis": {"claims": [], "gaps": ["MODEL_OUTPUT_INVALID：" + detail]}}
     return {"analysis": result.model_dump()}
 
 
@@ -118,18 +132,35 @@ def calculate_valuation(state: ValueState):
     return {"valuation": calculate(state["financials"], state["scope"], state["financial_issues"])}
 
 
+def claim_gate(claim: dict, evidence: dict) -> bool:
+    """引用匹配只是必要条件，另检查新闻归因和已披露期间。"""
+    def compact(value):
+        return re.sub(r"\s+", " ", value).strip()
+    if not claim.get("citations"):
+        return False
+    for citation in claim["citations"]:
+        item = evidence.get(citation["evidence_id"])
+        if item is None or compact(citation["quote"]) not in compact(item["excerpt"][:6000]):
+            return False
+        if item["category"] == "news" and not claim["text"].startswith(("据报道", "该来源称")):
+            return False
+        if item["category"] == "financials":
+            match = re.search(r"期间截至 (20\d{2})-", item["excerpt"])
+            if match and match.group(1) not in claim["text"]:
+                return False
+    return True
+
+
 def review_thesis(state: ValueState):
     verified, rejected = [], []
     def compact(value):
         return re.sub(r"\s+", " ", value).strip()
     for claim in state["analysis"].get("claims", []):
-        valid = all(c["evidence_id"] in state["evidence"] and
-                    compact(c["quote"]) in compact(state["evidence"][c["evidence_id"]]["excerpt"][:6000])
-                    for c in claim["citations"])
+        valid = claim_gate(claim, state["evidence"])
         if valid:
             verified.append(claim)
         else:
-            rejected.append("删除无法与原文逐字匹配的判断：" + claim["text"])
+            rejected.append("删除未通过引用、期间或来源归因检查的判断：" + claim["text"])
     present = {item["category"] for item in state["evidence"].values()}
     missing = [category for category in ["news", "industry", "policy"] if category not in present]
     gaps = state["analysis"].get("gaps", []) + rejected
@@ -155,12 +186,12 @@ def write_report(state: ValueState):
              f"研究截止日：**{scope['as_of']}（美国东部日终）** · SIC {company['sic']} · USD",
              f"报告状态：**{'有限结论：仍有数据或证据缺口' if limited else '已完成既定证据检查'}**",
              "## 研究边界",
-             "第一版支持美股机械制造业（SIC 3500–3599）。历史财报按原始 10-K 披露日过滤；"
+             "第一版支持美股计算机服务业（SIC 7370）。历史财报按原始 10-K 披露日过滤；"
              "公司身份与行业分类来自当前 SEC 元数据。网页按发布日期和已知修改日期筛选，"
              "当前抓取页面不能证明与历史时点内容完全一致，因此不是无前视偏差的回测数据集。",
              "政策资料仅使用官方摘要，尚未核验全文、生效日期及对公司的适用性。",
              "## 财务事实",
-             "| 财年末 | 披露日 | 收入（百万美元） | 合并净利润（百万美元） | 经营现金流（百万美元） | 固定资产支出（百万美元） | 稀释 EPS（美元） |",
+             "| 财年末 | 披露日 | 收入（百万美元） | 归母净利润（百万美元） | 经营现金流（百万美元） | 固定资产支出（百万美元） | 稀释 EPS（美元） |",
              "|---|---|---:|---:|---:|---:|---:|"]
     for row in state["financials"]:
         def value(key):
@@ -171,18 +202,18 @@ def write_report(state: ValueState):
             return f"{number:,.2f}"
         lines.append(f"| [{row['period_end']}]({row['url']}) | {row['filed']} | " +
                      " | ".join(value(k) for k in ["revenue", "profit", "operating_cash", "capex", "eps"]) + " |")
-    lines += ["合并净利润使用 ProfitLoss（含非控股权益）；EPS 使用披露稀释口径。"
+    lines += ["归母净利润使用 NetIncomeLoss（归属于母公司）；EPS 使用披露稀释口径。"
               "固定资产支出并非全部投资支出，不能直接将经营现金流减此项称为完整自由现金流。",
-              "## 基于证据的观察"]
+              "## 待复核的来源观察"]
     for claim in review.get("verified_claims", []):
         refs = " ".join(f"[{c['evidence_id']}]({state['evidence'][c['evidence_id']]['url']})"
                         for c in claim["citations"])
-        lines.append(f"- **{claim['topic']}**：{claim['text']} {refs}")
+        lines.append(f"- **{claim['topic']}**（引用匹配，尚未独立核实）：{claim['text']} {refs}")
         for c in claim["citations"]:
             quote = c["quote"].replace("\n", " ")
             lines.append(f"  - 核验原文：{quote}")
     if not review.get("verified_claims"):
-        lines.append("暂无通过引用核验的模型判断。")
+        lines.append("暂无通过引用、期间及来源归因检查的模型判断。")
     lines += ["## 可复算的估值情景"]
     valuation = state.get("valuation", {})
     if valuation.get("status") == "calculated":
@@ -197,6 +228,10 @@ def write_report(state: ValueState):
         lines.extend("- " + text for text in valuation["limitations"])
     else:
         lines.append("**未执行估值**：" + valuation.get("reason", "关键财务数据未通过校验"))
+    lines += ["## 执行范围"]
+    if issues:
+        lines.append("财务数据门禁未通过：经营分析、估值和结论审查已跳过；下表证据不代表已经完成相关判断。")
+    lines.append("当前仅分析完整年度财报，未接入最新季度结构化财务；引用检查不等于语义支持审查，Bull/Bear/Judge尚未接入。已采集来源数量仅代表收录，不代表问题已解决；政策仍限官方摘要。")
     lines += ["## 尚未解决的问题"]
     gaps = issues + review.get("gaps", [])
     gaps += ["缺少可核验的 " + category + " 资料" for category in review.get("missing_categories", [])]

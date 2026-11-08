@@ -26,7 +26,7 @@
 
 ## 4. 行为规则
 
-1. 使用指定 CIK 获取 submissions；请求 ticker 必须在返回 tickers 中，SIC 必须为整数 3500–3599。
+1. 使用指定 CIK 获取 submissions；请求 ticker 必须在返回 tickers 中，SIC 必须为整数 7370。
 2. 保存 name、ticker、cik、sic、sic_description、source_url、retrieved_at；metadata_basis 固定 current，报告必须披露不是历史身份快照。
 3. 缺字段或类型错误是 SOURCE_SCHEMA_ERROR，不解释为空公司；身份不符时立即结束，不调度其他采集。
 4. 公司端点在同一运行只取得一次，供后续 SEC 采集复用；身份请求计入外部请求预算。
@@ -42,7 +42,7 @@
 
 | 编号 | 场景 | Given | When | Then |
 |---|---|---|---|---|
-| DV-02-AC-01 | 身份匹配 | SEC 返回 CAT 和 SIC 3531 | 核验 CIK18230 | 返回可追溯 CompanyProfile |
+| DV-02-AC-01 | 身份匹配 | SEC 返回 GOOGL 和 SIC 7370 | 核验 CIK1652044 | 返回可追溯 CompanyProfile |
 | DV-02-AC-02 | 代码冲突 | CIK 对应公司 tickers 不含请求代码 | 核验 | IDENTITY_MISMATCH，尚无报告或估值 |
 | DV-02-AC-03 | 行业越界 | SIC 为 6000 或为空 | 核验 | 分别返回 UNSUPPORTED_INDUSTRY 或 SOURCE_SCHEMA_ERROR |
 | DV-02-AC-04 | 历史边界 | 截止日早于元数据取得日 | 构造 profile | 明确 current，不声称历史身份验证通过 |

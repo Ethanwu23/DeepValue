@@ -110,6 +110,22 @@ def read_page(url: str) -> tuple[str, str]:
     raise ValueError("页面重定向次数超过限制")
 
 
+def check_relevance(title: str, text: str, category: str, url: str):
+    """主题与来源独立于发布日期检查。"""
+    host = (urlsplit(url).hostname or "").lower()
+    if any(host == h or host.endswith("." + h) for h in ("weibo.com", "douyin.com", "tiktok.com")):
+        raise ValueError("社交转载不作为本轮研究的正文证据")
+    content = (title + " " + text).lower()
+    if category == "news" and not any(x in content for x in ("alphabet", "google", "谷歌")):
+        raise ValueError("正文缺少研究公司主体")
+    if category in ("policy", "industry"):
+        terms = ("alphabet", "google", "digital advertising", "online advertising",
+                 "search engine", "cloud computing", "artificial intelligence",
+                 "data privacy", "antitrust", "谷歌", "数字广告", "云计算", "人工智能", "反垄断")
+        if not any(x in content for x in terms):
+            raise ValueError("资料与公司及既定研究主题不相关")
+
+
 def verify_page(page: dict, category: str, cutoff: str) -> tuple[dict, dict]:
     url, identifier = page["url"], source_id(page["url"])
     try:
@@ -124,6 +140,7 @@ def verify_page(page: dict, category: str, cutoff: str) -> tuple[dict, dict]:
         excerpt = "\n".join(parser.parts)[:12000]
         if len(excerpt) < 200:
             raise ValueError("无法取得足够正文")
+        check_relevance(page["title"], excerpt, category, final_url)
         item = {"id": identifier, "category": category, "title": page["title"], "url": final_url,
                 "published": published[0], "modified": modified, "date_basis": "原网页日期元数据",
                 "excerpt": excerpt, "kind": "当前抓取的历史网页，非归档快照",
@@ -146,12 +163,12 @@ def collect_web(task: dict, scope: dict) -> dict:
 
 def collect_policy(task: dict, scope: dict) -> dict:
     start = (date.fromisoformat(scope["as_of"]) - timedelta(days=365)).isoformat()
-    params = {"conditions[term]": "manufacturing tariffs", "conditions[publication_date][lte]": scope["as_of"],
+    params = {"conditions[term]": task["query"], "conditions[publication_date][lte]": scope["as_of"],
               "conditions[publication_date][gte]": start, "per_page": 3, "order": "newest"}
     response = httpx.get("https://www.federalregister.gov/api/v1/documents.json",
                          params=params, timeout=25, headers={"User-Agent": "DeepValue/0.1 research"})
     response.raise_for_status()
-    evidence = {}
+    evidence, rejected = {}, {}
     for item in response.json()["results"]:
         published = date.fromisoformat(item["publication_date"]).isoformat()
         if published > scope["as_of"]:
@@ -161,10 +178,15 @@ def collect_policy(task: dict, scope: dict) -> dict:
             raise ValueError("政策来源域名不符合协议")
         identifier = source_id(url)
         abstract = item.get("abstract")
-        if not abstract:
+        try:
+            if not abstract:
+                raise ValueError("官方摘要缺失")
+            check_relevance(item["title"], abstract, "policy", url)
+        except ValueError as error:
+            rejected[identifier] = {"title": item["title"], "url": url, "category": "policy", "reason": str(error)}
             continue
         evidence[identifier] = {"id": identifier, "category": "policy", "title": item["title"],
             "url": url, "published": published, "date_basis": "Federal Register publication_date",
             "excerpt": abstract[:6000], "kind": "政策官方摘要；未核验全文、生效日期及公司适用性",
             "retrieved": date.today().isoformat()}
-    return {"evidence": evidence, "rejected": {}}
+    return {"evidence": evidence, "rejected": rejected}

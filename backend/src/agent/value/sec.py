@@ -10,14 +10,21 @@ BASE = "https://data.sec.gov"
 
 # 固定的概念映射保留会计含义；缺失时明确报告，不让模型填数。
 METRICS = {
-    "revenue": ("Revenues", "USD", True, "收入"),
-    "profit": ("ProfitLoss", "USD", True, "含非控股权益净利润"),
+    "revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "USD", True, "收入"),
+    "profit": ("NetIncomeLoss", "USD", True, "归母净利润"),
     "operating_cash": ("NetCashProvidedByUsedInOperatingActivities", "USD", True, "经营现金流"),
     "capex": ("PaymentsToAcquirePropertyPlantAndEquipment", "USD", True, "购建固定资产现金支出"),
     "eps": ("EarningsPerShareDiluted", "USD/shares", True, "稀释每股收益"),
     "assets": ("Assets", "USD", False, "资产"),
     "liabilities_equity": ("LiabilitiesAndStockholdersEquity", "USD", False, "负债及权益"),
 }
+
+
+def metric_definition(metric: str, cik: str, period_end: str):
+    """按公司与财报期间选择已核验的概念，绝不按缺失值切换。"""
+    if metric == "revenue" and int(cik) == 1652044 and period_end >= "2025-01-01":
+        return ("Revenues", "USD", True, "收入")
+    return METRICS[metric]
 
 
 def sec_json(path: str) -> dict:
@@ -47,8 +54,8 @@ def collect(scope: dict) -> dict:
     submission = sec_json(f"/submissions/CIK{cik}.json")
     if scope["ticker"] not in submission["tickers"]:
         raise ValueError("证券代码与 CIK 不匹配")
-    if not 3500 <= int(submission["sic"]) <= 3599:
-        raise ValueError("第一版仅支持 SEC SIC 3500–3599 机械制造业")
+    if int(submission["sic"]) != 7370:
+        raise ValueError("当前仅支持 SEC SIC 7370 计算机服务业")
     rows = rows_from_columns(submission["filings"]["recent"])
     # 截止日较早时读取官方历史索引，禁止用当前财报冒充历史披露。
     def available():
@@ -74,7 +81,8 @@ def collect(scope: dict) -> dict:
         source_id = "SEC-" + accession
         item = {"period_end": end, "filed": filing["filingDate"], "accession": accession,
                 "url": filing_url(cik, accession), "metrics": {}, "evidence_id": source_id}
-        for metric, (tag, unit, duration, label) in METRICS.items():
+        for metric in METRICS:
+            tag, unit, duration, label = metric_definition(metric, cik, end)
             candidates = []
             for fact in facts.get(tag, {}).get("units", {}).get(unit, []):
                 if fact["accn"] != accession or fact["end"] != end or fact["filed"] > scope["as_of"]:

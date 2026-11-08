@@ -1,13 +1,13 @@
 # DeepValue 总规约（DV-00）
 
-状态：Accepted，规约审查通过，随本 PR 合并到 dev 生效。版本：1.0。日期：2026-10-25。
+状态：Accepted，规约审查通过，随本 PR 合并到 dev 生效。版本：1.1。日期：2026-11-08。
 关联：[总任务 #1](https://github.com/Ethanwu23/DeepValue/issues/1)。
 
 本文是后续实现的规范，不描述当前代码已经具备全部能力。MUST/必须为验收约束；修改本规约必须同步能力 spec、验收编号和 CHANGELOG。各 spec 冲突时以本文为准，不能靠实现自行选择语义。
 
 ## 1. 产品与本轮边界
 
-保留单公司、美股机械制造业 SIC 3500–3599、固定研究截止日、3–5 个年度财报，以及三年 EPS 中位数乘 PE 的情景方法。默认 CAT / 18230 / 2025-03-01。
+保留单公司、美股计算机服务业 SIC 7370、固定研究截止日、3–5 个年度财报，以及三年 EPS 中位数乘 PE 的情景方法。默认 GOOGL / 1652044 / 2025-03-01。
 
 本轮存量改造同时补齐目标架构中的数据修复、结论补查、宏观历史版本和政策正文能力。宏观先支持 INDPRO；公告先支持限定 8-K；新闻与行业分别有节点、共享底层抓取。行业资格并不保证固定财务概念全部齐备，缺失必须显式阻断。
 
@@ -33,7 +33,7 @@ Python 使用严格 Pydantic 模型（extra=forbid），前端类型以共享 JS
 
 | 模型 | 必需字段与约束 |
 |---|---|
-| ResearchRequest | ticker、cik、as_of、industry=machinery、years、max_rounds、pe_low/base/high、focus、model；默认与范围见 DV-01 |
+| ResearchRequest | ticker、cik、as_of、industry=computer_services、years、max_rounds、pe_low/base/high、focus、model；默认与范围见 DV-01 |
 | ResearchContext | run_id(UUID)、request、created_at、cutoff_exclusive、spec_version、config_version、prompt_versions、BudgetLedger |
 | CompanyProfile | name、ticker、cik、sic、sic_description、source_url、retrieved_at、metadata_basis=current |
 | Filing | cik、accession、form、period_end、filed、source_url、artifact_id、content_hash；修订覆盖结果在 FilingSet 中独立保存 |
@@ -96,7 +96,7 @@ completed 表示报告生成完成，可同时 research_status=limited 或 block
 | 采集批次 | max_rounds=1或2，初始批次也占1；repair/follow_up 共用 |
 | 逻辑任务 | 每批最多4，总共最多8 |
 | 外部请求尝试 | 总计80，包含身份、搜索、HTTP重定向、宏观、政策、模型和重试 |
-| 模型尝试 | 总计8，亦计入80；分析与审查各每轮最多1个逻辑调用 |
+| 模型尝试 | 总计8，亦计入80；Bull、Bear、Judge各每轮1个逻辑调用；反思为结构化自检加程序校验，主流程无额外模型审查 |
 | 网页候选 | 每个 news/industry 任务最多5；网页并发3 |
 | 外部并发 | 整个 run 最多6；各供应商额外限流 |
 | 全局时间 | 600秒，其中最后5秒预留本地结果整理；在595秒后不得发外部请求 |
@@ -138,7 +138,7 @@ completed 表示报告生成完成，可同时 research_status=limited 或 block
 1. 规约先行：总规约、15份能力 spec、迁移表、验收矩阵一并审查。
 2. 再实现：先 copy 既有实现，再分离职责与修正行为；不保留双入口和旧协议兼容。
 3. 再特征测试：以场景编号验证产品行为，不照抄实现。当前文档中的测试路径均为计划，不表示已有测试或已通过。
-4. 最后整体切换：主图、API与前端使用统一契约，真实 CAT 联调明确记录有效来源与剩余缺口。
+4. 最后整体切换：主图、API与前端使用统一契约，真实 GOOGL 联调明确记录有效来源与剩余缺口。
 5. CI当前只有构建/加载检查；不能将绿色CI当作业务验收。每个能力完成后把对应特征测试加入CI；真实付费接入不放入常规CI。
 
 工作分支 codex/specifications，PR目标 dev。仅完成规约不关闭含实现与测试任务的能力Issue。本次已完成规约一致性审查，Accepted 状态随合并生效；本次仍不提前写业务代码。
@@ -185,3 +185,9 @@ v1为单用户本机运行，同一进程最多1个活跃研究；再次提交�
 - [FRED observations](https://fred.stlouisfed.org/docs/api/fred/series_observations.html)：明确实时区间、观测窗口与输出类型，取得截止日可见版本。
 - [FRED INDPRO](https://fred.stlouisfed.org/series/INDPRO)：月度工业生产总指数，不是机械制造业独立指数。
 - [Federal Register API](https://www.federalregister.gov/developers/documentation/api/v1)：检索与文档关联；网页版本不是官方法律版本，法律研究需核对govinfo对应官方版本。
+
+## 12. 标的与阶段实现增补（1.1）
+
+默认Alphabet Class A（GOOGL），CIK1652044，SIC7370；Class C（GOOG）不是本轮默认股类。使用合并财务不代表两类股票价格可互换。广告/云业务、AI开支、监管为研究重点，不据此宣称已具备分部模型。SEC身份依据：https://www.sec.gov/edgar/browse/?CIK=1652044 。
+
+本阶段实现共享Request/Error/Claim/Role契约、显式配置、MCP协议解析、HTTP/结构化LLM适配器及原子预算。SEC/FRED业务采集、SSE取消、角色执行子图仍按后续能力任务推进；配置采用显式load入口，尚未切换的旧图不启用整套新启动检查。

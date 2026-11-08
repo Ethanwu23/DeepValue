@@ -15,26 +15,8 @@ class ModelConfig(BaseModel):
 
 def load_available_models_from_env() -> List[ModelConfig]:
     """从环境变量加载可用模型列表"""
-    models_json = os.getenv("AVAILABLE_MODELS")
-    
-    if not models_json:
-        # 默认模型列表
-        return [
-            ModelConfig(model_id="qwen3.6-flash", display_name="Qwen-Flash", icon="Zap", icon_color="yellow-400"),
-            ModelConfig(model_id="qwen3.6-plus", display_name="Qwen-Plus", icon="Zap", icon_color="orange-400"),
-            ModelConfig(model_id="qwen3.7-max", display_name="Qwen-Max", icon="Cpu", icon_color="purple-400"),
-        ]
-    
-    try:
-        models_data = json.loads(models_json)
-        return [ModelConfig(**model) for model in models_data]
-    except Exception as e:
-        print(f"警告: 解析AVAILABLE_MODELS失败，使用默认模型列表。错误: {e}")
-        return [
-            ModelConfig(model_id="qwen3.6-flash", display_name="Qwen-Flash", icon="Zap", icon_color="yellow-400"),
-            ModelConfig(model_id="qwen3.6-plus", display_name="Qwen-Plus", icon="Zap", icon_color="orange-400"),
-            ModelConfig(model_id="qwen3.7-max", display_name="Qwen-Max", icon="Cpu", icon_color="purple-400"),
-        ]
+    from deepvalue.config import parse_models
+    return list(parse_models(os.getenv("AVAILABLE_MODELS", "")))
 
 
 def get_default_model_id() -> str:
@@ -42,7 +24,7 @@ def get_default_model_id() -> str:
     models = load_available_models_from_env()
     if models:
         return models[-1].model_id
-    return "qwen3.7-max"  # 兜底默认值
+    raise ValueError("未配置可用模型")
 
 
 class Configuration(BaseModel):
