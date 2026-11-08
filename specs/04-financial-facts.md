@@ -63,3 +63,7 @@
 规约完成：所有规则有明确输入、输出、错误及可观察验收场景；与总规约无冲突，关联Issue可追踪。
 
 能力完成：按spec实现、逐项特征测试通过、来源/错误/状态可追溯，更新README与CHANGELOG；不得仅因文档合并就关闭实现任务。
+
+## 1.2 Alphabet收入概念版本
+
+对CIK1652044，2025财年起明确使用us-gaap:Revenues；2024及以前使用RevenueFromContractWithCustomerExcludingAssessedTax。此为已核对原始申报的分期映射，不是字段缺失后尝试其他概念。指定概念缺失仍阻断，不从后续申报补数。源：https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/0001652044-26-000018-index.html 。

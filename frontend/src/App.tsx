@@ -13,6 +13,7 @@ type Evidence = { title: string; url: string; category: string; published: strin
 type ResearchState = {
   messages: Message[];
   request: Record<string, unknown>;
+  scope?: { ticker: string; as_of: string };
   report: string;
   financials: Financial[];
   evidence: Record<string, Evidence>;
@@ -62,7 +63,7 @@ export default function App() {
     onError: (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
   });
   const values = thread.values;
-  const report = values.report || "";
+  const report = values.scope?.as_of === activeScope.asOf && values.scope?.ticker === activeScope.ticker ? values.report || "" : "";
   const evidence = Object.entries(values.evidence || {});
   const financials = values.financials || [];
   const busy = thread.isLoading;

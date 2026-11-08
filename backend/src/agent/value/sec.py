@@ -20,6 +20,13 @@ METRICS = {
 }
 
 
+def metric_definition(metric: str, cik: str, period_end: str):
+    """按公司与财报期间选择已核验的概念，绝不按缺失值切换。"""
+    if metric == "revenue" and int(cik) == 1652044 and period_end >= "2025-01-01":
+        return ("Revenues", "USD", True, "收入")
+    return METRICS[metric]
+
+
 def sec_json(path: str) -> dict:
     global _LAST
     with _LOCK:
@@ -74,7 +81,8 @@ def collect(scope: dict) -> dict:
         source_id = "SEC-" + accession
         item = {"period_end": end, "filed": filing["filingDate"], "accession": accession,
                 "url": filing_url(cik, accession), "metrics": {}, "evidence_id": source_id}
-        for metric, (tag, unit, duration, label) in METRICS.items():
+        for metric in METRICS:
+            tag, unit, duration, label = metric_definition(metric, cik, end)
             candidates = []
             for fact in facts.get(tag, {}).get("units", {}).get(unit, []):
                 if fact["accn"] != accession or fact["end"] != end or fact["filed"] > scope["as_of"]:
