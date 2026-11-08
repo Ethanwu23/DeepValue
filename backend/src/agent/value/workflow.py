@@ -1,5 +1,6 @@
 import json
 import re
+from pydantic import ValidationError
 from datetime import date, timedelta
 from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, START, END
@@ -113,8 +114,17 @@ def analyze_business(state: ValueState):
 资料：{evidence}"""
     agent = JsonAgent(model_id=state["scope"]["model"], keys=Analysis)
     agent.set_step_prompt(prompt)
-    result = agent.step(as_of=state["scope"]["as_of"], focus=state["scope"]["focus"],
-                        evidence=json.dumps(evidence, ensure_ascii=False))
+    try:
+        result = agent.step(as_of=state["scope"]["as_of"], focus=state["scope"]["focus"],
+                            evidence=json.dumps(evidence, ensure_ascii=False))
+    except (ValidationError, json.JSONDecodeError) as error:
+        # 不截断原文、不放宽长度；本次分析明确失败，事实和估值仍可形成有限报告。
+        detail = "模型输出未通过结构校验，本轮经营判断未被采用"
+        if isinstance(error, ValidationError):
+            if any(e["type"] == "string_too_long" and e["loc"][-1] == "quote"
+                   for e in error.errors(include_input=False)):
+                detail = "模型引用超过350字符，本轮经营判断未被采用"
+        return {"analysis": {"claims": [], "gaps": ["MODEL_OUTPUT_INVALID：" + detail]}}
     return {"analysis": result.model_dump()}
 
 

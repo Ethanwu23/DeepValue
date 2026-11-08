@@ -103,8 +103,8 @@ class Agent:
     def post_process(self, response):
         return response
 
-    def prompt_format(self, prompt, **kwargs):
-        prompt_ = copy.deepcopy(prompt)
+    def prompt_format(self, template, **kwargs):
+        prompt_ = copy.deepcopy(template)
         for k in kwargs.keys():
             rep = "{"+k+"}"
             prompt_ = prompt_.replace(rep, str(kwargs[k]))
@@ -112,6 +112,11 @@ class Agent:
 
 
 class JsonAgent(Agent):
+    def step(self, **kwargs):
+        # 结构错误不是网络故障，不重复生成或返回未经校验的文本。
+        prompt = self.prompt_format(self.step_prompt, **kwargs)
+        return self.post_process(self(prompt))
+
     def __init__(self, model_id="qwen2.5-72b-instruct", keys=None):
         super().__init__(model_id)
         self.keys = keys
