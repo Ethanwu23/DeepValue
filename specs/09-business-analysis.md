@@ -1,6 +1,6 @@
 # DV-09 经营与风险分析
 
-状态：Accepted（随本 PR 合并到 dev 生效）；版本：1.0；日期：2026-10-25。
+状态：Accepted（随本 PR 合并到 dev 生效）；版本：1.1；日期：2026-11-08。
 关联：[Issue #11](https://github.com/Ethanwu23/DeepValue/issues/11)。公共约束：[总规约](00-system-contract.md)。本文件定义目标行为，不宣称已实现。
 
 ## 1. 目标与范围
@@ -63,3 +63,16 @@
 规约完成：所有规则有明确输入、输出、错误及可观察验收场景；与总规约无冲突，关联Issue可追踪。
 
 能力完成：按spec实现、逐项特征测试通过、来源/错误/状态可追溯，更新README与CHANGELOG；不得仅因文档合并就关闭实现任务。
+
+## 9. 多角色子图（1.1）
+
+Bull 与 Bear 并行读取同一 evidence_version，首轮互不读取草稿；Judge 在两者反思完成后汇合。每角色一次模型调用返回 initial_claims、reflection、revised_claims；reflection 含保留/修订/撤回的 claim_id、反证和理由，程序反思节点检查引用及修订关系，不额外调用模型。Judge 返回逐条 supported/unsupported/uncertain 裁决及缺失前提，反思裁决越界。角色可以没有结论，不强制看多看空，不自行联网或计算。
+
+任一前置角色结构失败，Judge 跳过，返回 ROLE_FAILED 缺口；不得使用未通过验证的草稿。每轮最多3次逻辑模型调用、全run最多8次实际尝试。补查改变 evidence_version 后全部角色重跑。
+
+| 编号 | Given | When | Then |
+|---|---|---|---|
+| DV-09-AC-07 | Bull/Bear接收相同证据 | 并行生成 | snapshot/version相同，首轮互不读取草稿 |
+| DV-09-AC-08 | 角色撤回判断 | 反思校验 | 撤回ID必须来自初判，主结论不得保留撤回项 |
+| DV-09-AC-09 | 一个角色结构失败 | 汇合 | Judge跳过，产生明确缺口 |
+| DV-09-AC-10 | 两轮均执行三角色 | 记账 | 六次逻辑调用，网络重试仍受八次总上限约束 |

@@ -19,14 +19,14 @@
 
 ## 3. 输入与输出
 
-- 输入：FilingSet、Company Facts、机械制造业指标契约。
+- 输入：FilingSet、Company Facts、计算机服务业指标契约。
 - 输出：FinancialFact[]、FinancialQualityResult、ResearchGap[]。
 - 依赖：DV-03、DV-08。
 - 数据字段、状态、日期和预算使用总规约，不自定义同义字段或隐式空成功。
 
 ## 4. 行为规则
 
-1. 保留现有七项明确映射：revenue=Revenues；profit=ProfitLoss；operating_cash=NetCashProvidedByUsedInOperatingActivities；capex=PaymentsToAcquirePropertyPlantAndEquipment；eps=EarningsPerShareDiluted；assets=Assets；liabilities_equity=LiabilitiesAndStockholdersEquity。
+1. 保留现有七项明确映射：revenue=RevenueFromContractWithCustomerExcludingAssessedTax；profit=NetIncomeLoss；operating_cash=NetCashProvidedByUsedInOperatingActivities；capex=PaymentsToAcquirePropertyPlantAndEquipment；eps=EarningsPerShareDiluted；assets=Assets；liabilities_equity=LiabilitiesAndStockholdersEquity。
 2. 仅 eps 使用 USD/shares，其余 USD。前五项为 duration，后两项 instant；每个值保存 tag、unit、start/end、filed、accession、evidence_id。
 3. 必须同 accession、同期间末、披露不晚于 cutoff；duration 为 330–380 天且流量起始日一致。instant 不接受 start。
 4. 同 start/end/value 的重复事实可合并；候选值不唯一或缺失产生缺口，不能将别的概念作为别名兜底。行业资格不保证每家公司满足这套指标契约。
