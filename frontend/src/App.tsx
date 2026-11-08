@@ -29,12 +29,12 @@ const stages: Record<string, string> = {
 };
 
 export default function App() {
-  const [ticker, setTicker] = useState("CAT");
-  const [cik, setCik] = useState("18230");
+  const [ticker, setTicker] = useState("GOOGL");
+  const [cik, setCik] = useState("1652044");
   const [asOf, setAsOf] = useState("2025-03-01");
   const [years, setYears] = useState(3);
   const [rounds, setRounds] = useState(2);
-  const [focus, setFocus] = useState("分析盈利质量、行业周期与资本配置，主动寻找反面证据。");
+  const [focus, setFocus] = useState("分析广告与云业务、AI资本开支和监管风险，主动寻找反面证据。");
   const [multiples, setMultiples] = useState([10, 15, 20]);
   const [models, setModels] = useState<ModelConfig[]>([]);
   const [model, setModel] = useState("");
@@ -78,7 +78,7 @@ export default function App() {
     setActiveScope({ticker, asOf});
     try {
       await thread.submit({ request: {
-        ticker, cik, as_of: asOf, industry: "machinery", years, max_rounds: rounds,
+        ticker, cik, as_of: asOf, industry: "computer_services", years, max_rounds: rounds,
         pe_low: multiples[0], pe_base: multiples[1], pe_high: multiples[2],
         focus, model,
       }}, { config: { recursion_limit: 40 } });
@@ -101,7 +101,7 @@ export default function App() {
       <aside className="dv-panel">
         <div className="dv-kicker">研究范围</div>
         <h1>从一家公司开始。</h1>
-        <p className="dv-muted">美股机械制造业 · SIC 3500–3599<br/>默认示例：Caterpillar / CAT</p>
+        <p className="dv-muted">美股计算机服务业 · SIC 7370<br/>默认示例：Alphabet / GOOGL</p>
         <form onSubmit={submit}>
           <fieldset disabled={busy}>
             <div className="dv-pair">

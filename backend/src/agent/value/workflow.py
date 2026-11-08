@@ -39,11 +39,11 @@ def plan_research(state: ValueState):
     queries = {
         "news": f'{name} earnings capital allocation risks press release after:{after} before:{before}',
         "industry": f'{state["company"]["sic_description"]} demand competition industry after:{after} before:{before}',
-        "policy": "manufacturing tariffs",
+        "policy": "digital advertising competition regulation",
     }
     if round_number > 1:
         queries["news"] = f'{name} annual results financial outlook after:{after} before:{before}'
-        queries["industry"] = f'{name} machinery demand downturn competitors after:{after} before:{before}'
+        queries["industry"] = f'{name} digital advertising cloud competition antitrust after:{after} before:{before}'
     tasks = [{"id": f"{round_number}-{category}", "category": category, "query": queries[category]}
              for category in categories]
     return {"round": round_number, "tasks": tasks}
@@ -155,12 +155,12 @@ def write_report(state: ValueState):
              f"研究截止日：**{scope['as_of']}（美国东部日终）** · SIC {company['sic']} · USD",
              f"报告状态：**{'有限结论：仍有数据或证据缺口' if limited else '已完成既定证据检查'}**",
              "## 研究边界",
-             "第一版支持美股机械制造业（SIC 3500–3599）。历史财报按原始 10-K 披露日过滤；"
+             "第一版支持美股计算机服务业（SIC 7370）。历史财报按原始 10-K 披露日过滤；"
              "公司身份与行业分类来自当前 SEC 元数据。网页按发布日期和已知修改日期筛选，"
              "当前抓取页面不能证明与历史时点内容完全一致，因此不是无前视偏差的回测数据集。",
              "政策资料仅使用官方摘要，尚未核验全文、生效日期及对公司的适用性。",
              "## 财务事实",
-             "| 财年末 | 披露日 | 收入（百万美元） | 合并净利润（百万美元） | 经营现金流（百万美元） | 固定资产支出（百万美元） | 稀释 EPS（美元） |",
+             "| 财年末 | 披露日 | 收入（百万美元） | 归母净利润（百万美元） | 经营现金流（百万美元） | 固定资产支出（百万美元） | 稀释 EPS（美元） |",
              "|---|---|---:|---:|---:|---:|---:|"]
     for row in state["financials"]:
         def value(key):
@@ -171,7 +171,7 @@ def write_report(state: ValueState):
             return f"{number:,.2f}"
         lines.append(f"| [{row['period_end']}]({row['url']}) | {row['filed']} | " +
                      " | ".join(value(k) for k in ["revenue", "profit", "operating_cash", "capex", "eps"]) + " |")
-    lines += ["合并净利润使用 ProfitLoss（含非控股权益）；EPS 使用披露稀释口径。"
+    lines += ["归母净利润使用 NetIncomeLoss（归属于母公司）；EPS 使用披露稀释口径。"
               "固定资产支出并非全部投资支出，不能直接将经营现金流减此项称为完整自由现金流。",
               "## 基于证据的观察"]
     for claim in review.get("verified_claims", []):

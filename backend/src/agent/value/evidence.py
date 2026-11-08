@@ -146,7 +146,7 @@ def collect_web(task: dict, scope: dict) -> dict:
 
 def collect_policy(task: dict, scope: dict) -> dict:
     start = (date.fromisoformat(scope["as_of"]) - timedelta(days=365)).isoformat()
-    params = {"conditions[term]": "manufacturing tariffs", "conditions[publication_date][lte]": scope["as_of"],
+    params = {"conditions[term]": task["query"], "conditions[publication_date][lte]": scope["as_of"],
               "conditions[publication_date][gte]": start, "per_page": 3, "order": "newest"}
     response = httpx.get("https://www.federalregister.gov/api/v1/documents.json",
                          params=params, timeout=25, headers={"User-Agent": "DeepValue/0.1 research"})

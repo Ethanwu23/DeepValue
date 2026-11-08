@@ -5,27 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict, model_validator
 from langgraph.graph import add_messages
 
 
-class ResearchRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-    ticker: str = Field(default="CAT", pattern=r"^[A-Z][A-Z0-9.-]{0,9}$")
-    cik: str = Field(default="18230", pattern=r"^[0-9]{1,10}$")
-    as_of: date
-    industry: Literal["machinery"] = "machinery"
-    years: int = Field(default=3, ge=3, le=5)
-    max_rounds: int = Field(default=2, ge=1, le=2)
-    pe_low: float = Field(default=10, gt=0, le=80)
-    pe_base: float = Field(default=15, gt=0, le=80)
-    pe_high: float = Field(default=20, gt=0, le=80)
-    focus: str = Field(default="经营质量、周期风险与资本配置", max_length=1000)
-    model: str = Field(min_length=1, max_length=100)
-
-    @model_validator(mode="after")
-    def check_scope(self):
-        if not date(2010, 1, 1) <= self.as_of <= datetime.now(ZoneInfo("America/New_York")).date():
-            raise ValueError("研究截止日须为 2010 年起、且不晚于美国东部当前日期")
-        if not self.pe_low < self.pe_base < self.pe_high:
-            raise ValueError("市盈率假设必须满足：低情景 < 基准情景 < 高情景")
-        return self
+from deepvalue.contracts.research import ResearchRequest
 
 
 class Citation(BaseModel):

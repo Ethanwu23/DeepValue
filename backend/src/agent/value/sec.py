@@ -10,8 +10,8 @@ BASE = "https://data.sec.gov"
 
 # 固定的概念映射保留会计含义；缺失时明确报告，不让模型填数。
 METRICS = {
-    "revenue": ("Revenues", "USD", True, "收入"),
-    "profit": ("ProfitLoss", "USD", True, "含非控股权益净利润"),
+    "revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "USD", True, "收入"),
+    "profit": ("NetIncomeLoss", "USD", True, "归母净利润"),
     "operating_cash": ("NetCashProvidedByUsedInOperatingActivities", "USD", True, "经营现金流"),
     "capex": ("PaymentsToAcquirePropertyPlantAndEquipment", "USD", True, "购建固定资产现金支出"),
     "eps": ("EarningsPerShareDiluted", "USD/shares", True, "稀释每股收益"),
@@ -47,8 +47,8 @@ def collect(scope: dict) -> dict:
     submission = sec_json(f"/submissions/CIK{cik}.json")
     if scope["ticker"] not in submission["tickers"]:
         raise ValueError("证券代码与 CIK 不匹配")
-    if not 3500 <= int(submission["sic"]) <= 3599:
-        raise ValueError("第一版仅支持 SEC SIC 3500–3599 机械制造业")
+    if int(submission["sic"]) != 7370:
+        raise ValueError("当前仅支持 SEC SIC 7370 计算机服务业")
     rows = rows_from_columns(submission["filings"]["recent"])
     # 截止日较早时读取官方历史索引，禁止用当前财报冒充历史披露。
     def available():

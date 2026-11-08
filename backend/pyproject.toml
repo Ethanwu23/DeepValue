@@ -55,3 +55,6 @@ dev = [
     "langgraph-cli[inmem]>=0.1.71",
     "pytest>=8.3.5",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
